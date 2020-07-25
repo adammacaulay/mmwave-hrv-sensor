@@ -59,28 +59,28 @@ valuesUpdateCount = 10;     % Updates the vital signs estimates every nth Count
 INITIALIZED = 0;
 LENGTH_OFFSET_BYTES   = LENGTH_HEADER_BYTES  - LENGTH_MAGIC_WORD_BYTES + LENGTH_TLV_MESSAGE_HEADER_BYTES
 
-INDEX_GLOBAL_COUNT                =  21;
-INDEX_RANGE_BIN_PHASE             =  1;
-INDEX_RANGE_BIN_VALUE             =  2;
-INDEX_PHASE                       =  5;
-INDEX_BREATHING_WAVEFORM          =  6;
-INDEX_HEART_WAVEFORM              =  7;
-INDEX_HEART_RATE_EST_FFT          =  8;
-INDEX_HEART_RATE_EST_FFT_4Hz      =  9;
-INDEX_HEART_RATE_EST_FFT_xCorr    =  10;
-INDEX_HEART_RATE_EST_PEAK         =  11;
-INDEX_BREATHING_RATE_FFT          =  12;
-INDEX_BREATHING_RATE_xCorr        =  13;
-INDEX_BREATHING_RATE_PEAK         =  14;
-INDEX_CONFIDENCE_METRIC_BREATH    =  15;
-INDEX_CONFIDENCE_METRIC_BREATH_xCorr = 16;
-INDEX_CONFIDENCE_METRIC_HEART       = 17;
-INDEX_CONFIDENCE_METRIC_HEART_4Hz   = 18;
-INDEX_CONFIDENCE_METRIC_HEART_xCorr = 19;
-INDEX_ENERGYWFM_BREATH              = 20;
-INDEX_ENERGYWFM_HEART               = 21;
-INDEX_MOTION_DETECTION              = 22;
-INDEX_RANGE_PROFILE_START           = 35%(LENGTH_DEBUG_DATA_OUT_BYTES+LENGTH_TLV_MESSAGE_HEADER_BYTES)/4  + 1
+INDEX_GLOBAL_COUNT                      = 21;
+INDEX_RANGE_BIN_PHASE                   = 1;
+INDEX_RANGE_BIN_VALUE                   = 2;
+INDEX_PHASE                             = 5;
+INDEX_BREATHING_WAVEFORM                = 6;
+INDEX_HEART_WAVEFORM                    = 7;
+INDEX_HEART_RATE_EST_FFT                = 8;
+INDEX_HEART_INDICES_LOW                 = 9;
+INDEX_HEART_INDICES_HIGH                = 10;
+INDEX_HEART_RATE_EST_PEAK               = 11;
+INDEX_BREATHING_RATE_FFT                = 12;
+INDEX_BREATHING_RATE_xCorr              = 13;
+INDEX_BREATHING_RATE_PEAK               = 14;
+INDEX_CONFIDENCE_METRIC_BREATH          = 15;
+INDEX_CONFIDENCE_METRIC_BREATH_xCorr    = 16;
+INDEX_CONFIDENCE_METRIC_HEART           = 17;
+INDEX_CONFIDENCE_METRIC_HEART_4Hz       = 18;
+INDEX_CONFIDENCE_METRIC_HEART_xCorr     = 19;
+INDEX_ENERGYWFM_BREATH                  = 20;
+INDEX_ENERGYWFM_HEART                   = 21;
+INDEX_MOTION_DETECTION                  = 22;
+INDEX_RANGE_PROFILE_START               = 35%(LENGTH_DEBUG_DATA_OUT_BYTES+LENGTH_TLV_MESSAGE_HEADER_BYTES)/4  + 1
 
 OFFSET = LENGTH_OFFSET_BYTES + LENGTH_TLV_MESSAGE_HEADER_BYTES;
 INDEX_IN_RANGE_BIN_INDEX  = (OFFSET + 3: OFFSET + 4);
@@ -92,8 +92,8 @@ INDEX_IN_DATA_BREATHING_WAVEFORM           = TRANSLATE_INDEX(OFFSET, INDEX_BREAT
 INDEX_IN_DATA_HEART_WAVEFORM               = TRANSLATE_INDEX(OFFSET, INDEX_HEART_WAVEFORM);
 INDEX_IN_DATA_BREATHING_RATE_FFT           = TRANSLATE_INDEX(OFFSET, INDEX_BREATHING_RATE_FFT);
 INDEX_IN_DATA_HEART_RATE_EST_FFT           = TRANSLATE_INDEX(OFFSET, INDEX_HEART_RATE_EST_FFT);
-INDEX_IN_DATA_HEART_RATE_EST_FFT_4Hz       = TRANSLATE_INDEX(OFFSET, INDEX_HEART_RATE_EST_FFT_4Hz);
-INDEX_IN_DATA_HEART_RATE_EST_FFT_xCorr     = TRANSLATE_INDEX(OFFSET, INDEX_HEART_RATE_EST_FFT_xCorr);
+INDEX_IN_DATA_HEART_INDICES_LOW            = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_LOW);
+INDEX_IN_DATA_HEART_INDICES_HIGH           = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_HIGH);
 INDEX_IN_DATA_BREATHING_RATE_PEAK          = TRANSLATE_INDEX(OFFSET, INDEX_BREATHING_RATE_PEAK);
 INDEX_IN_DATA_HEART_RATE_EST_PEAK          = TRANSLATE_INDEX(OFFSET, INDEX_HEART_RATE_EST_PEAK);
 INDEX_IN_DATA_CONFIDENCE_METRIC_BREATH     = TRANSLATE_INDEX(OFFSET, INDEX_CONFIDENCE_METRIC_BREATH);
@@ -223,7 +223,12 @@ dataPlotPrev = 0;
 dataPlotHeartPrev = 0;
 dataPlotThresh = 50;
 
-while (~PAUSED_KEY_PRESSED), 
+indices = uint16(zeros(1,1000));
+indicesLowTemp = single(0);
+indicesHighTemp = single(0);
+HRVcount = 1;
+countdownClock = tic;
+while (~PAUSED_KEY_PRESSED && toc(countdownClock)< 300), 
     if ~isempty(bytevec)
         startFramecou = framecou;
         
@@ -316,6 +321,31 @@ end
    outSumEnergyHeartWfm = dataOut_AR14xx_float(INDEX_IN_DATA_ENERGYWFM_HEART);
    rangeBinValue = dataOut_AR14xx_float(INDEX_IN_DATA_RANGE_BIN_VALUE);
    motionFlag = dataOut_AR14xx_float(INDEX_IN_DATA_MOTION_DETECTION_FLAG);
+   
+   indicesLow = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_LOW);
+   indicesHigh = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_HIGH);
+   if(indicesLow ~= indicesLowTemp)
+       tempLow = typecast(indicesLow, 'uint8'); %[4,3,2,1]
+       for i = 4:1
+           if(tempLow(i) ~= 0)
+               indices(HRVcount) = uint16(tempLow(i)) + uint16(floor(outGlobalCount/64)*64);
+               HRVcount = HRVcount + 1;
+           end
+       end
+       indicesLowTemp = indicesLow;
+   end
+   
+   if(indicesHigh ~= indicesHighTemp)
+       tempHigh = typecast(indicesHigh, 'uint8'); %[4,3,2,1]
+       for i = 4:1
+           if(tempHigh(i) ~= 0)
+               indices(HRVcount) = uint16(tempHigh(i)) + uint16(floor(outGlobalCount/64)*64);
+               HRVcount = HRVcount + 1;
+           end
+       end
+       indicesHighTemp = indicesHigh;
+   end
+
 
    app.Count_GUI.Value = double(outGlobalCount);  
 
@@ -424,7 +454,7 @@ if (mod(cnt,valuesUpdateCount)==0)    % Displays after every valuesUpdateCount
            app.HeartRateNumberDisp.Value = double(heartRateEstDisplayFinal); 
            app.HeartRateNumberDisp.BackgroundColor = 'white'; 
      end
-
+     
 end
 
 %% Update Waveform Plots   
@@ -498,6 +528,17 @@ end
         tIdleStart = tic;
    end
 end
+
+% Calculate HRV data ------------
+indices = indices(1:find(indices,1,'last'));
+NN = zeros(length(indices)-1);
+for i = 1:length(NN)
+    NN(i) = indices(i+1) - indices(i);
+end
+
+[SDNN, RMSSD, HTI] = HRV(NN);
+% -------------------------------
+
 %close and delete handles before exiting
 fclose(sphandle); %close com port
 delete(sphandle);
@@ -505,9 +546,6 @@ fclose(spCliHandle);
 delete(spCliHandle);   
   
 fclose(fid_write_bin);
-
-    
-
 end
 
 function [] = plotImage(obj, event)
@@ -736,6 +774,20 @@ function [y] = pow2roundup (x)
     while x > y
         y = y * 2;
     end
+end
+
+function [SDNN, RMSSD, HTI] = HRV(NN)
+    SDNN = std(NN);
+    
+    RMSSD = 0;
+    for i = 1:length(NN)-1
+        RMSSD = RMSSD + (NN(i) - NN(i+1))^2;
+    end
+    RMSSD = RMSSD/length(NN);
+    RMSSD = sqrt(RMSSD);
+    
+    [H, edges] = histcounts(NN, linspace(0.5,1.25,96));
+    HTI = length(NN)/max(H);
 end
 
 
