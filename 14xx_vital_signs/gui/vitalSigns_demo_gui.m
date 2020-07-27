@@ -228,7 +228,7 @@ indicesLowTemp = single(0);
 indicesHighTemp = single(0);
 HRVcount = 1;
 countdownClock = tic;
-while (~PAUSED_KEY_PRESSED && toc(countdownClock)< 300), 
+while (~PAUSED_KEY_PRESSED && toc(countdownClock)< 300) 
     if ~isempty(bytevec)
         startFramecou = framecou;
         
