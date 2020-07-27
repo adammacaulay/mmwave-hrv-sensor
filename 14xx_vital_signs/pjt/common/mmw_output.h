@@ -149,17 +149,17 @@ typedef struct VitalSignsDemo_OutputStats_t
     float outputFilterBreathOut;        // 6
     float outputFilterHeartOut;         // 7
     float heartRateEst_FFT;             // 8
-    float heartRateEst_FFT_4Hz;         // 9
-    float heartRateEst_xCorr;           // 10
+    float heartbeatIndices1;                // 9 - Replacement for heartRateEst_FFT_4Hz
+    float heartbeatIndices2;                // 10 - Replacement for heartRateEst_xCorr
     float heartRateEst_peakCount_filtered;  // 11
     float breathingRateEst_FFT;             // 12
-    float breathingRateEst_xCorr;           // 13
+    float heartbeatIndices3;                // 13 - Replacement for breathingRateEst_xCorr
     float breathingRateEst_peakCount;       // 14
-    float confidenceMetricBreathOut;        // 15
-    float confidenceMetricBreathOut_xCorr;  // 16
-    float confidenceMetricHeartOut;         // 17
-    float confidenceMetricHeartOut_4Hz;     // 18
-    float confidenceMetricHeartOut_xCorr;   // 19
+    float heartbeatIndices4;                // 15 - Replacement for confidenceMetricBreathOut
+    float heartbeatIndices5;                // 16 - Replacement for confidenceMetricBreathOut_xCorr
+    float heartbeatIndices6;                // 17 - Replacement for confidenceMetricHeartOut
+    float heartbeatIndices7;                // 18 - Replacement for confidenceMetricHeartOut_4Hz
+    float heartbeatIndices8;                // 19 - Replacement for confidenceMetricHeartOut_xCorr
     float sumEnergyBreathWfm;               // 20
     float sumEnergyHeartWfm;                // 21
     float motionDetectedFlag;               // 22

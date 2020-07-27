@@ -441,6 +441,14 @@ void VitalSignsDemo_vitalSignProcess(VitalSignsDemo_DataPathObj *obj)
     uint16_t maxIndexHeartBeatSpect_4Hz;                  // Indices corresponding to the max peak from [1.6 - 4.0] Hz
     float breathingRateEst_FFT, heartRateEst_FFT;         // Vital Signs Estimate based on the FFT
     float heartRateEst_FFT_4Hz;                           // Vital Signs Estimate based on the FFT
+    float heartbeatIndices1;                              // Indices corresponding to first 4 peaks in float format
+    float heartbeatIndices2;                              // Indices corresponding to second 4 peaks in float format
+    float heartbeatIndices3;                              // Indices corresponding to third 4 peaks in float format
+    float heartbeatIndices4;                              // Indices corresponding to fourth 4 peaks in float format
+    float heartbeatIndices5;                              // Indices corresponding to fifth 4 peaks in float format
+    float heartbeatIndices6;                              // Indices corresponding to sixth 4 peaks in float format
+    float heartbeatIndices7;                              // Indices corresponding to seventh 4 peaks in float format
+    float heartbeatIndices8;                              // Indices corresponding to eighth 4 peaks in float format
 
     /* Confidence Metric associated with the estimates */
     float confidenceMetricBreath[MAX_NUM_PEAKS_SPECTRUM];         // Confidence Metric associated with each Breathing Spectrum Peak
@@ -454,9 +462,17 @@ void VitalSignsDemo_vitalSignProcess(VitalSignsDemo_DataPathObj *obj)
     uint16_t pPeakLocsHeart[MAX_PEAKS_ALLOWED_WFM];    // Peak locations (indices) of the Cardiac Waveform
     uint16_t pPeakLocsBreath[MAX_PEAKS_ALLOWED_WFM];   // Peak locations (indices) of the Breathing Waveform
     uint16_t pPeakLocsValid[MAX_PEAKS_ALLOWED_WFM];    // Peak locations after only retaining the valid peaks
-    uint16_t numPeaksBreath, numPeaksHeart;                       // Number of peaks in the time-domain filtered waveform
-    float breathingRateEst_peakCount, heartRateEst_peakCount;     // Vital Signs Estimate based on peak-Interval
-    float heartRateEst_peakCount_filtered;                        // Heart-rate peak-interval based estimate after filtering
+    uint16_t numPeaksBreath, numPeaksHeart;                         // Number of peaks in the time-domain filtered waveform
+    float breathingRateEst_peakCount, heartRateEst_peakCount;       // Vital Signs Estimate based on peak-Interval
+    float heartRateEst_peakCount_filtered;                          // Heart-rate peak-interval based estimate after filtering
+    uint8_t peakIndexBuffer1[sizeof(float)] = {0};                        // Buffer to store first 4 peak indices
+    uint8_t peakIndexBuffer2[sizeof(float)] = {0};                        // Buffer to store second 4 peak indices
+    uint8_t peakIndexBuffer3[sizeof(float)] = {0};                        // Buffer to store third 4 peak indices
+    uint8_t peakIndexBuffer4[sizeof(float)] = {0};                        // Buffer to store fourth 4 peak indices
+    uint8_t peakIndexBuffer5[sizeof(float)] = {0};                        // Buffer to store fifth 4 peak indices
+    uint8_t peakIndexBuffer6[sizeof(float)] = {0};                        // Buffer to store sixth 4 peak indices
+    uint8_t peakIndexBuffer7[sizeof(float)] = {0};                        // Buffer to store seventh 4 peak indices
+    uint8_t peakIndexBuffer8[sizeof(float)] = {0};                        // Buffer to store eighth 4 peak indices
 
     /* Exponential smoothing filter */
     static float breathWfmOutUpdated, heartWfmOutUpdated;    // Updated values after exponential smoothing
@@ -694,7 +710,7 @@ void VitalSignsDemo_vitalSignProcess(VitalSignsDemo_DataPathObj *obj)
       numPeaksHeart  = find_Peaks(obj->pTempCircularBuff, float_type, pPeakLocsHeart,obj->pPeakValues, 0, obj->circularBufferSizeHeart  - 1);
       if (numPeaksHeart != 0)
       {
-          numPeaksHeart  =  filterPeaksWfm(pPeakLocsHeart, pPeakLocsValid, numPeaksHeart, obj->peakDistanceHeart_Min, obj->peakDistanceHeart_Max);
+          numPeaksHeart  =  filterPeaksWfm(pPeakLocsHeart, pPeakLocsValid, numPeaksHeart, obj->peakDistanceHeart_Min -2, obj->peakDistanceHeart_Max);
       }
       heartRateEst_peakCount = CONVERT_HZ_BPM * ((numPeaksHeart * obj->samplingFreq_Hz) / obj->circularBufferSizeHeart);
 
@@ -704,6 +720,57 @@ void VitalSignsDemo_vitalSignProcess(VitalSignsDemo_DataPathObj *obj)
           }
           pDataIn[FIR_FILTER_SIZE - 1] = heartRateEst_peakCount;
           heartRateEst_peakCount_filtered = filter_FIR(pDataIn, obj->pFilterCoefs, FIR_FILTER_SIZE);
+
+          for (loopIndexBuffer = 0; loopIndexBuffer < numPeaksHeart; loopIndexBuffer++)
+          {
+              if (pPeakLocsValid[loopIndexBuffer] == 0 || pPeakLocsValid[loopIndexBuffer] >= obj->circularBufferSizeHeart)
+              {
+                  break;
+              }
+              else
+              {
+                  if (loopIndexBuffer < 4)
+                  {
+                      peakIndexBuffer1[loopIndexBuffer] = (uint8_t) pPeakLocsValid[loopIndexBuffer];
+                  }
+                  else if (loopIndexBuffer >= 4 && loopIndexBuffer < 8)
+                  {
+                      peakIndexBuffer2[loopIndexBuffer-4] = (uint8_t) pPeakLocsValid[loopIndexBuffer];
+                  }
+                  else if (loopIndexBuffer >= 8 && loopIndexBuffer < 12)
+                  {
+                      peakIndexBuffer3[loopIndexBuffer-8] = (uint8_t) pPeakLocsValid[loopIndexBuffer];
+                  }
+                  else if (loopIndexBuffer >= 12 && loopIndexBuffer < 16)
+                  {
+                      peakIndexBuffer4[loopIndexBuffer-12] = (uint8_t) pPeakLocsValid[loopIndexBuffer];
+                  }
+                  else if (loopIndexBuffer >= 16 && loopIndexBuffer < 20)
+                  {
+                      peakIndexBuffer5[loopIndexBuffer-16] = (uint8_t) pPeakLocsValid[loopIndexBuffer];
+                  }
+                  else if (loopIndexBuffer >= 20 && loopIndexBuffer < 24)
+                  {
+                      peakIndexBuffer6[loopIndexBuffer-20] = (uint8_t) pPeakLocsValid[loopIndexBuffer];
+                  }
+                  else if (loopIndexBuffer >= 24 && loopIndexBuffer < 28)
+                  {
+                      peakIndexBuffer7[loopIndexBuffer-24] = (uint8_t) pPeakLocsValid[loopIndexBuffer];
+                  }
+                  else if (loopIndexBuffer >= 28 && loopIndexBuffer < 32)
+                  {
+                      peakIndexBuffer8[loopIndexBuffer-28] = (uint8_t) pPeakLocsValid[loopIndexBuffer];
+                  }
+              }
+          }
+          memcpy(&heartbeatIndices1, peakIndexBuffer1, sizeof(heartbeatIndices1));
+          memcpy(&heartbeatIndices2, peakIndexBuffer2, sizeof(heartbeatIndices2));
+          memcpy(&heartbeatIndices3, peakIndexBuffer3, sizeof(heartbeatIndices3));
+          memcpy(&heartbeatIndices4, peakIndexBuffer4, sizeof(heartbeatIndices4));
+          memcpy(&heartbeatIndices5, peakIndexBuffer5, sizeof(heartbeatIndices5));
+          memcpy(&heartbeatIndices6, peakIndexBuffer6, sizeof(heartbeatIndices6));
+          memcpy(&heartbeatIndices7, peakIndexBuffer7, sizeof(heartbeatIndices7));
+          memcpy(&heartbeatIndices8, peakIndexBuffer8, sizeof(heartbeatIndices8));
 
       numPeaksBreath = find_Peaks(obj->pVitalSignsCircularBuff, int32_type, pPeakLocsBreath, obj->pPeakValues, 0, obj->circularBufferSizeBreath - 1);
       if (numPeaksBreath != 0)
@@ -963,19 +1030,19 @@ void VitalSignsDemo_vitalSignProcess(VitalSignsDemo_DataPathObj *obj)
     obj->VitalSigns_Output.sumEnergyHeartWfm  = sumEnergyHeartWfm;
     obj->VitalSigns_Output.sumEnergyBreathWfm = sumEnergyBreathWfm;
 
-    obj->VitalSigns_Output.confidenceMetricBreathOut = confidenceMetricBreathOut;
-    obj->VitalSigns_Output.confidenceMetricBreathOut_xCorr    = confidenceMetricBreathOut_xCorr;//breathRateEst_HarmonicEnergy;//;//heartRateEst_HarmonicEnergy;
-    obj->VitalSigns_Output.confidenceMetricHeartOut = confidenceMetricHeartOut;    // Confidence Metric associated with the estimates
-    obj->VitalSigns_Output.confidenceMetricHeartOut_4Hz = confidenceMetricHeartOut_4Hz;
-    obj->VitalSigns_Output.confidenceMetricHeartOut_xCorr = confidenceMetricHeartOut_xCorr;
+    obj->VitalSigns_Output.heartbeatIndices1 = heartbeatIndices1;
+    obj->VitalSigns_Output.heartbeatIndices2 = heartbeatIndices2;
+    obj->VitalSigns_Output.heartbeatIndices3 = heartbeatIndices3;
+    obj->VitalSigns_Output.heartbeatIndices4 = heartbeatIndices4;
+    obj->VitalSigns_Output.heartbeatIndices5 = heartbeatIndices5;
 
     obj->VitalSigns_Output.breathingRateEst_FFT = breathingRateEst_FFT;
     obj->VitalSigns_Output.breathingRateEst_peakCount = breathingRateEst_peakCount;
-    obj->VitalSigns_Output.breathingRateEst_xCorr  = breathRateEst_xCorr;//breathRateEst_HarmonicEnergy;
+    obj->VitalSigns_Output.heartbeatIndices6 = heartbeatIndices6;
 
     obj->VitalSigns_Output.heartRateEst_peakCount_filtered = heartRateEst_peakCount_filtered;
-    obj->VitalSigns_Output.heartRateEst_xCorr = heartRateEst_xCorr;
-    obj->VitalSigns_Output.heartRateEst_FFT_4Hz = heartRateEst_FFT_4Hz;
+    obj->VitalSigns_Output.heartbeatIndices7 = heartbeatIndices7;
+    obj->VitalSigns_Output.heartbeatIndices8 = heartbeatIndices8;
     obj->VitalSigns_Output.heartRateEst_FFT = heartRateEst_FFT;
 
     obj->VitalSigns_Output.processingCyclesOut = processingCyclesOut;

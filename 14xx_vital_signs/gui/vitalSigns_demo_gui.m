@@ -66,17 +66,17 @@ INDEX_PHASE                             = 5;
 INDEX_BREATHING_WAVEFORM                = 6;
 INDEX_HEART_WAVEFORM                    = 7;
 INDEX_HEART_RATE_EST_FFT                = 8;
-INDEX_HEART_INDICES_LOW                 = 9;
-INDEX_HEART_INDICES_HIGH                = 10;
+INDEX_HEART_INDICES_1                   = 9;
+INDEX_HEART_INDICES_2                   = 10;
 INDEX_HEART_RATE_EST_PEAK               = 11;
 INDEX_BREATHING_RATE_FFT                = 12;
-INDEX_BREATHING_RATE_xCorr              = 13;
+INDEX_HEART_INDICES_3                   = 13;
 INDEX_BREATHING_RATE_PEAK               = 14;
-INDEX_CONFIDENCE_METRIC_BREATH          = 15;
-INDEX_CONFIDENCE_METRIC_BREATH_xCorr    = 16;
-INDEX_CONFIDENCE_METRIC_HEART           = 17;
-INDEX_CONFIDENCE_METRIC_HEART_4Hz       = 18;
-INDEX_CONFIDENCE_METRIC_HEART_xCorr     = 19;
+INDEX_HEART_INDICES_4                   = 15;
+INDEX_HEART_INDICES_5                   = 16;
+INDEX_HEART_INDICES_6                   = 17;
+INDEX_HEART_INDICES_7                   = 18;
+INDEX_HEART_INDICES_8                   = 19;
 INDEX_ENERGYWFM_BREATH                  = 20;
 INDEX_ENERGYWFM_HEART                   = 21;
 INDEX_MOTION_DETECTION                  = 22;
@@ -85,19 +85,22 @@ INDEX_RANGE_PROFILE_START               = 35%(LENGTH_DEBUG_DATA_OUT_BYTES+LENGTH
 OFFSET = LENGTH_OFFSET_BYTES + LENGTH_TLV_MESSAGE_HEADER_BYTES;
 INDEX_IN_RANGE_BIN_INDEX  = (OFFSET + 3: OFFSET + 4);
 
-INDEX_IN_DATA_CONFIDENCE_METRIC_HEART_4Hz  = TRANSLATE_INDEX(OFFSET, INDEX_CONFIDENCE_METRIC_HEART_4Hz);
 INDEX_IN_DATA_RANGE_BIN_VALUE              = TRANSLATE_INDEX(OFFSET ,INDEX_RANGE_BIN_VALUE);
 INDEX_IN_DATA_PHASE                        = TRANSLATE_INDEX(OFFSET, INDEX_PHASE);
 INDEX_IN_DATA_BREATHING_WAVEFORM           = TRANSLATE_INDEX(OFFSET, INDEX_BREATHING_WAVEFORM);
 INDEX_IN_DATA_HEART_WAVEFORM               = TRANSLATE_INDEX(OFFSET, INDEX_HEART_WAVEFORM);
 INDEX_IN_DATA_BREATHING_RATE_FFT           = TRANSLATE_INDEX(OFFSET, INDEX_BREATHING_RATE_FFT);
 INDEX_IN_DATA_HEART_RATE_EST_FFT           = TRANSLATE_INDEX(OFFSET, INDEX_HEART_RATE_EST_FFT);
-INDEX_IN_DATA_HEART_INDICES_LOW            = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_LOW);
-INDEX_IN_DATA_HEART_INDICES_HIGH           = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_HIGH);
+INDEX_IN_DATA_HEART_INDICES_1              = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_1);
+INDEX_IN_DATA_HEART_INDICES_2              = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_2);
+INDEX_IN_DATA_HEART_INDICES_3              = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_3);
+INDEX_IN_DATA_HEART_INDICES_4              = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_4);
+INDEX_IN_DATA_HEART_INDICES_5              = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_5);
+INDEX_IN_DATA_HEART_INDICES_6              = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_6);
+INDEX_IN_DATA_HEART_INDICES_7              = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_7);
+INDEX_IN_DATA_HEART_INDICES_8              = TRANSLATE_INDEX(OFFSET, INDEX_HEART_INDICES_8);
 INDEX_IN_DATA_BREATHING_RATE_PEAK          = TRANSLATE_INDEX(OFFSET, INDEX_BREATHING_RATE_PEAK);
 INDEX_IN_DATA_HEART_RATE_EST_PEAK          = TRANSLATE_INDEX(OFFSET, INDEX_HEART_RATE_EST_PEAK);
-INDEX_IN_DATA_CONFIDENCE_METRIC_BREATH     = TRANSLATE_INDEX(OFFSET, INDEX_CONFIDENCE_METRIC_BREATH);
-INDEX_IN_DATA_CONFIDENCE_METRIC_HEART      = TRANSLATE_INDEX(OFFSET, INDEX_CONFIDENCE_METRIC_HEART);
 INDEX_IN_DATA_ENERGYWFM_BREATH             = TRANSLATE_INDEX(OFFSET, INDEX_ENERGYWFM_BREATH);
 INDEX_IN_DATA_ENERGYWFM_HEART              = TRANSLATE_INDEX(OFFSET, INDEX_ENERGYWFM_HEART);
 INDEX_IN_DATA_MOTION_DETECTION_FLAG        = TRANSLATE_INDEX(OFFSET, INDEX_MOTION_DETECTION);
@@ -223,28 +226,29 @@ dataPlotPrev = 0;
 dataPlotHeartPrev = 0;
 dataPlotThresh = 50;
 
-indices = uint16(zeros(1,1000));
-indicesLowTemp = single(0);
-indicesHighTemp = single(0);
+indices = uint16(zeros(3,3500));
+indices1Temp = single(0);
+
 HRVcount = 1;
+frameCount = -2;
 countdownClock = tic;
-while (~PAUSED_KEY_PRESSED && toc(countdownClock)< 300), 
+while (~PAUSED_KEY_PRESSED && toc(countdownClock)< 300)
     if ~isempty(bytevec)
         startFramecou = framecou;
         
-if(app.PAUSED_PRESSED)
-    PAUSED_KEY_PRESSED = 1;
-end
+    if(app.PAUSED_PRESSED)
+        PAUSED_KEY_PRESSED = 1;
+    end
 
-if(app.EXIT_PRESSED)
-    EXIT_KEY_PRESSED = 1;
-end
+    if(app.EXIT_PRESSED)
+        EXIT_KEY_PRESSED = 1;
+    end
 
-if(EXIT_KEY_PRESSED)
-   app.EXIT_PRESSED = 0;
-   ss = sprintf('sensorStop \n');
-   fprintf(spCliHandle, ss);
-end
+    if(EXIT_KEY_PRESSED)
+       app.EXIT_PRESSED = 0;
+       ss = sprintf('sensorStop \n');
+       fprintf(spCliHandle, ss);
+    end
 
      bytevec_cp(bytevec_cp_len+1:bytevec_cp_len+length(bytevec)) = bytevec;
      bytevec_cp_len = bytevec_cp_len + length(bytevec);
@@ -315,35 +319,111 @@ end
    heartRateEstPeak = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_RATE_EST_PEAK);
    breathRateEstFFT = dataOut_AR14xx_float(INDEX_IN_DATA_BREATHING_RATE_FFT);
    heartRateEstFFT = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_RATE_EST_FFT);
-   outConfidenceMetric_Breath = dataOut_AR14xx_float(INDEX_IN_DATA_CONFIDENCE_METRIC_BREATH);
-   outConfidenceMetric_Heart = dataOut_AR14xx_float(INDEX_IN_DATA_CONFIDENCE_METRIC_HEART);
    outSumEnergyBreathWfm = dataOut_AR14xx_float(INDEX_IN_DATA_ENERGYWFM_BREATH);
    outSumEnergyHeartWfm = dataOut_AR14xx_float(INDEX_IN_DATA_ENERGYWFM_HEART);
    rangeBinValue = dataOut_AR14xx_float(INDEX_IN_DATA_RANGE_BIN_VALUE);
    motionFlag = dataOut_AR14xx_float(INDEX_IN_DATA_MOTION_DETECTION_FLAG);
    
-   indicesLow = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_LOW);
-   indicesHigh = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_HIGH);
-   if(indicesLow ~= indicesLowTemp)
-       tempLow = typecast(indicesLow, 'uint8'); %[4,3,2,1]
-       for i = 4:1
-           if(tempLow(i) ~= 0)
-               indices(HRVcount) = uint16(tempLow(i)) + uint16(floor(outGlobalCount/64)*64);
-               HRVcount = HRVcount + 1;
+   indices1 = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_1);
+   indices2 = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_2);
+   indices3 = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_3);
+   indices4 = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_4);
+   indices5 = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_5);
+   indices6 = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_6);
+   indices7 = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_7);
+   indices8 = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_8);
+   if(~(indices1 == indices1Temp))% && indices2 == indices2Temp && indices3 == indices3Temp && indices4 == indices4Temp && indices5 == indices5Temp && indices6 == indices6Temp && indices7 == indices7Temp && indices8 == indices8Temp))
+       fprintf("Bing");
+       if(frameCount < 0)
+           frameCount = frameCount + 1;
+           indices1Temp = indices1;
+       else
+           temp1 = typecast(indices1, 'uint8'); %[4,3,2,1]
+           fprintf("Float 1: %d %d %d %d\n", temp1);
+           for i = 1:4
+               if(temp1(i) ~= 0)
+                   indices(1,HRVcount) = uint16(temp1(i)) + uint16(frameCount*256);
+                   indices(2,HRVcount) = uint16(temp1(i));
+                   indices(3,HRVcount) = 1;
+                   HRVcount = HRVcount + 1;
+               end
            end
-       end
-       indicesLowTemp = indicesLow;
-   end
-   
-   if(indicesHigh ~= indicesHighTemp)
-       tempHigh = typecast(indicesHigh, 'uint8'); %[4,3,2,1]
-       for i = 4:1
-           if(tempHigh(i) ~= 0)
-               indices(HRVcount) = uint16(tempHigh(i)) + uint16(floor(outGlobalCount/64)*64);
-               HRVcount = HRVcount + 1;
+           indices1Temp = indices1;
+
+           temp2 = typecast(indices2, 'uint8'); %[4,3,2,1]
+           fprintf("Float 2: %d %d %d %d\n", temp2);
+           for i = 1:4
+               if(temp2(i) ~= 0)
+                   indices(1,HRVcount) = uint16(temp2(i)) + uint16(frameCount*256);
+                   indices(2,HRVcount) = uint16(temp2(i));
+                   indices(3,HRVcount) = 2;
+                   HRVcount = HRVcount + 1;
+               end
            end
+
+           temp3 = typecast(indices3, 'uint8'); %[4,3,2,1]
+           fprintf("Float 3: %d %d %d %d\n", temp3);
+           for i = 1:4
+               if(temp3(i) ~= 0)
+                   indices(1,HRVcount) = uint16(temp3(i)) + uint16(frameCount*256);
+                   indices(2,HRVcount) = uint16(temp3(i));
+                   indices(3,HRVcount) = 3;
+                   HRVcount = HRVcount + 1;
+               end
+           end
+
+           temp4 = typecast(indices4, 'uint8'); %[4,3,2,1]
+           fprintf("Float 4: %d %d %d %d\n", temp4);
+           for i = 1:4
+               if(temp4(i) ~= 0)
+                   indices(1,HRVcount) = uint16(temp4(i)) + uint16(frameCount*256);
+                   indices(2,HRVcount) = uint16(temp4(i));
+                   indices(3,HRVcount) = 4;
+                   HRVcount = HRVcount + 1;
+               end
+           end
+
+           temp5 = typecast(indices5, 'uint8'); %[4,3,2,1]
+           for i = 1:4
+               if(temp5(i) ~= 0)
+                   indices(1,HRVcount) = uint16(temp5(i)) + uint16(frameCount*256);
+                   indices(2,HRVcount) = uint16(temp5(i));
+                   indices(3,HRVcount) = 5;
+                   HRVcount = HRVcount + 1;
+               end
+           end
+
+           temp6 = typecast(indices6, 'uint8'); %[4,3,2,1]
+           for i = 1:4
+               if(temp6(i) ~= 0)
+                   indices(1,HRVcount) = uint16(temp6(i)) + uint16(frameCount*256);
+                   indices(2,HRVcount) = uint16(temp6(i));
+                   indices(3,HRVcount) = 6;
+                   HRVcount = HRVcount + 1;
+               end
+           end
+
+           temp7 = typecast(indices7, 'uint8'); %[4,3,2,1]
+           for i = 1:4
+               if(temp7(i) ~= 0)
+                   indices(1,HRVcount) = uint16(temp7(i)) + uint16(frameCount*256);
+                   indices(2,HRVcount) = uint16(temp7(i));
+                   indices(3,HRVcount) = 7;
+                   HRVcount = HRVcount + 1;
+               end
+           end
+
+           temp8 = typecast(indices8, 'uint8'); %[4,3,2,1]
+           for i = 1:4
+               if(temp8(i) ~= 0)
+                   indices(1,HRVcount) = uint16(temp8(i)) + uint16(frameCount*256);
+                   indices(2,HRVcount) = uint16(temp8(i));
+                   indices(3,HRVcount) = 8;
+                   HRVcount = HRVcount + 1;
+               end
+           end
+           frameCount = frameCount + 1;
        end
-       indicesHighTemp = indicesHigh;
    end
 
 
@@ -373,37 +453,18 @@ end
     outPhasePlot(cnt)  = outPhase;
   
     % Exponential Average
-        
-    outHeartPrev_CM = outHeartNew_CM;
-    alpha = 0.5;
-    outHeartNew_CM = alpha*(outConfidenceMetric_Heart) + (1-alpha)*outHeartPrev_CM;
-    
-    outBreathPrev_CM = outBreathNew_CM;
-    alpha = 0.5;
-    outBreathNew_CM = alpha*(outConfidenceMetric_Breath) + (1-alpha)*outBreathPrev_CM;
-    
     rangeBinValuePrev = rangeBinValueUpdated;
     alpha = 0.1;
     rangeBinValueUpdated = alpha*(rangeBinValue) + (1-alpha)*rangeBinValuePrev;
     
      
-    % Heart Rate Display Decision 
-if (app.FFT_SPECTRAL_EST_ENABLE)
-        if (INITIALIZED==0)
-        heartRateEstDisplay = heartRateEstPeak;   % Initialize
-        end
-        if (outHeartNew_CM > thresh_HeartCM)
-            heartRateEstDisplay = heartRateEstFFT;
-            INITIALIZED = 1;
-        end
- else  
+    % Heart Rate Display Decision
     diffEst_heartRate = abs(heartRateEstFFT - heartRateEstPeak);    
-    if ( (outHeartNew_CM > thresh_HeartCM) || (diffEst_heartRate < thresh_diffEst) )
+    if (diffEst_heartRate < thresh_diffEst)
     heartRateEstDisplay = heartRateEstFFT; 
     else
     heartRateEstDisplay = heartRateEstPeak;
-	end
-end
+    end
 
 heartRateEstDisplay_CircBuffer = circshift(heartRateEstDisplay_CircBuffer, [0 -1]);
 heartRateEstDisplay_CircBuffer(LENGTH_BUFFER) = heartRateEstDisplay;
@@ -416,12 +477,6 @@ if (mod(cnt,valuesUpdateCount)==0)    % Displays after every valuesUpdateCount
     end
     if(isnan(outSumEnergyHeartWfm) || isinf(outSumEnergyHeartWfm))
         outSumEnergyHeartWfm = 99;
-    end
-    if(isnan(outBreathNew_CM) || isinf(outBreathNew_CM))
-        outBreathNew_CM = 99;
-    end
-    if(isnan(outHeartNew_CM) || isinf(outHeartNew_CM))
-        outHeartNew_CM = 99;
     end
     
     app.Temp1Display.Value = double(breathRateEstPeak);%;
@@ -447,7 +502,7 @@ if (mod(cnt,valuesUpdateCount)==0)    % Displays after every valuesUpdateCount
            app.BreathingRateNumberDisp.BackgroundColor = 'white'; 
      end    
    
-     if ((rangeBinValueUpdated < rangeBinValueThresh) ||(outConfidenceMetric_Heart < 0.01) || outSumEnergyHeartWfm < outSumEnergyHeartWfm_thresh )
+     if ((rangeBinValueUpdated < rangeBinValueThresh) || outSumEnergyHeartWfm < outSumEnergyHeartWfm_thresh )
            app.HeartRateNumberDisp.Value = 0; 
            app.HeartRateNumberDisp.BackgroundColor = 'red'; 
      else
@@ -530,11 +585,15 @@ end
 end
 
 % Calculate HRV data ------------
-indices = indices(1:find(indices,1,'last'));
-NN = zeros(length(indices)-1);
+indicesTemp = indices(1,:);
+indicesTemp = indicesTemp(1:find(indicesTemp,1,'last'));
+NN = zeros(1,length(indicesTemp)-1);
 for i = 1:length(NN)
-    NN(i) = indices(i+1) - indices(i);
+    NN(i) = indicesTemp(i+1) - indicesTemp(i);
 end
+invalidEntries = NN < 11 | NN > 24;
+NN(invalidEntries) = [];
+NN = NN * 50; % convert number of samples to ms
 
 [SDNN, RMSSD, HTI] = HRV(NN);
 % -------------------------------
@@ -616,55 +675,54 @@ end
 
 
 function [clusterLabel ] = dbscan_1D(x, MinPts, Eps)
+
 if(isrow(x))
-x = x';
+    x = x';
 end
 DistanceMatrix = squareform(pdist(x, 'euclidean'));
- 
-numObs = length(x) ;         % Number of Observations
-numCluster = 0;              % Number of Clusters
-numNeighbors        = zeros(numObs,1); % num neighbours in range <= Eps
-bool_isNoise        = zeros(numObs,1); % class (noise = 1, otherwise 0);
-clusterLabel        = nan(numObs,1);   % Cluster label
-ObsClassified          = zeros(numObs,1); % Not classfied  = 0, Classified = 1
 
- for indexObs =1:numObs
-     
-         if(~ObsClassified(indexObs))
-          [temp, indexNeighbors]     = find(DistanceMatrix(indexObs, :) <= Eps);
-           numNeighbors(indexObs)  = length(indexNeighbors);
-  
-       if(numNeighbors(indexObs) <= MinPts)              % Classified as Noise  
+numObs = length(x);             % Number of Observations
+numCluster = 0;                 % Number of Clusters
+numNeighbors = zeros(numObs,1); % num neighbours in range <= Eps
+bool_isNoise = zeros(numObs,1); % class (noise = 1, otherwise 0);
+clusterLabel = nan(numObs,1);   % Cluster label
+ObsClassified = zeros(numObs,1);% Not classfied  = 0, Classified = 1
+
+for indexObs =1:numObs
+
+    if(~ObsClassified(indexObs))
+        [temp, indexNeighbors]     = find(DistanceMatrix(indexObs, :) <= Eps);
+        numNeighbors(indexObs)  = length(indexNeighbors);
+
+        if(numNeighbors(indexObs) <= MinPts)              % Classified as Noise
             bool_isNoise(indexObs)  = 1;
             clusterLabel(indexObs)  = 0;
             ObsClassified(indexObs) = 1;
             continue;
-       else                                              % Classfied as a cluster 
+        else                                              % Classfied as a cluster
             numCluster           = numCluster + 1;
             bool_isNoise(indexNeighbors)    = 1;
             clusterLabel(indexNeighbors) = numCluster;
-            ObsClassified(indexNeighbors) = 1;            
+            ObsClassified(indexNeighbors) = 1;
             % stack
             seedsIdx    = indexNeighbors(indexNeighbors ~= indexObs);
             while(~isempty(seedsIdx))
+                currSeedStackIdx     = 1;
+                currSeedIdx          = seedsIdx(currSeedStackIdx);
+                [temp, indexNeighbors]  = find(DistanceMatrix(currSeedIdx, :) <= Eps);
+                numNeighbors(currSeedIdx)    = length(indexNeighbors);
 
-            currSeedStackIdx     = 1;
-            currSeedIdx          = seedsIdx(currSeedStackIdx);
-            [temp, indexNeighbors]  = find(DistanceMatrix(currSeedIdx, :) <= Eps);
-            numNeighbors(currSeedIdx)    = length(indexNeighbors);
-            
                 if(numNeighbors(currSeedIdx)>=MinPts+1)
-                   seedsIdx = [seedsIdx, indexNeighbors(ObsClassified(indexNeighbors) == 0)];
-                   clusterLabel(indexNeighbors(ObsClassified(indexNeighbors) == 0 | bool_isNoise(indexNeighbors) == 1)) = numCluster;
-                   bool_isNoise(indexNeighbors)  = 0;
-                   ObsClassified(indexNeighbors) = 1;                     
+                    seedsIdx = [seedsIdx, indexNeighbors(ObsClassified(indexNeighbors) == 0)];
+                    clusterLabel(indexNeighbors(ObsClassified(indexNeighbors) == 0 | bool_isNoise(indexNeighbors) == 1)) = numCluster;
+                    bool_isNoise(indexNeighbors)  = 0;
+                    ObsClassified(indexNeighbors) = 1;
                 end
-              seedsIdx(currSeedStackIdx) = [];
+                seedsIdx(currSeedStackIdx) = [];
             end
-            
-       end
-   end
- end
+        end
+    end
+end
 
 
 end
@@ -786,7 +844,7 @@ function [SDNN, RMSSD, HTI] = HRV(NN)
     RMSSD = RMSSD/length(NN);
     RMSSD = sqrt(RMSSD);
     
-    [H, edges] = histcounts(NN, linspace(0.5,1.25,96));
+    [H, ~] = histcounts(NN, linspace(500,1250,96));
     HTI = length(NN)/max(H);
 end
 
