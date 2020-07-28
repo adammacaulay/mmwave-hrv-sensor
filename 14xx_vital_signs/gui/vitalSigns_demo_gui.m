@@ -190,7 +190,6 @@ fid_write_bin = fopen(strcat(file_name, '.bin'),'wb');  % By Default open the fi
 outBreathPlot = nan(1,PLOT_DISPLAY_LENGTH);outBreathPlot(1) = 0;
 outHeartPlot  = nan(1,PLOT_DISPLAY_LENGTH);outHeartPlot(1) = 0;
 outPhasePlot  = nan(1,PLOT_DISPLAY_LENGTH);outPhasePlot(1) = 0;
-EXIT_KEY_PRESSED = 0;
 RESET_KEY_PRESSED = 0;
 
 outSumEnergyBreathWfm_thresh = 3;    % Threshold on the Breathing Waveform 
@@ -593,13 +592,6 @@ if(~RESET_KEY_PRESSED)
     % stop sensor
     ss = sprintf('sensorStop \n');
     fprintf(spCliHandle, ss);
-
-    while(~EXIT_KEY_PRESSED)
-        if(app.EXIT_PRESSED)
-             EXIT_KEY_PRESSED = 1;
-             app.EXIT_PRESSED = 0;
-        end
-    end
 end
 % -------------------------------
 
