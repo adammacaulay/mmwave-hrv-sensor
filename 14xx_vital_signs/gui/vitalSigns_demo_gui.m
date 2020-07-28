@@ -596,6 +596,9 @@ NN(invalidEntries) = [];
 NN = NN * 50; % convert number of samples to ms
 
 [SDNN, RMSSD, HTI] = HRV(NN);
+app.SDNN_val.value = SDNN;
+app.RMSSD_val.value = RMSSD;
+app.HTI_val.value = HTI;
 % -------------------------------
 
 %close and delete handles before exiting
