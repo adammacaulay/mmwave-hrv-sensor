@@ -279,7 +279,6 @@ outPhasePlot  = nan(1,PLOT_DISPLAY_LENGTH);outPhasePlot(1) = 0;
    pause(.2);
 outSumEnergyBreathWfm_thresh = app.ThresholdBreathing.Value;   % Threshold on the Breathing Waveform 
 thresh_HeartCM = app.ThresholdHeart.Value;
-app.MaxRangeIndex.Value = rangeBinPhase;
 app.REFRESH_PRESSED = 0;   
 end
 
@@ -599,7 +598,7 @@ if(~RESET_KEY_PRESSED)
         if(app.EXIT_PRESSED)
              EXIT_KEY_PRESSED = 1;
              app.EXIT_PRESSED = 0;
-	end
+        end
     end
 end
 % -------------------------------
