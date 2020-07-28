@@ -232,6 +232,10 @@ indices1Temp = single(0);
 HRVcount = 1;
 frameCount = -2;
 countdownClock = tic;
+ 
+Timer = timer('ExecutionMode', 'fixedRate'); % Create the timer object
+Timer.TimerFcn = @app.TimerRefresh; % Tell the timer to run TimerRefresh every second.
+start(Timer);
 while (~RESET_KEY_PRESSED && toc(countdownClock)< 300)
     if ~isempty(bytevec)
         startFramecou = framecou;
@@ -265,6 +269,7 @@ while (~RESET_KEY_PRESSED && toc(countdownClock)< 300)
         
 
 if(app.REFRESH_PRESSED)
+stop(Timer);
 framecountDummy = 0;
 outBreathPlot = nan(1,PLOT_DISPLAY_LENGTH);outBreathPlot(1) = 0;
 outHeartPlot  = nan(1,PLOT_DISPLAY_LENGTH);outHeartPlot(1) = 0;
@@ -328,14 +333,12 @@ end
    indices6 = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_6);
    indices7 = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_7);
    indices8 = dataOut_AR14xx_float(INDEX_IN_DATA_HEART_INDICES_8);
-   if(~(indices1 == indices1Temp))% && indices2 == indices2Temp && indices3 == indices3Temp && indices4 == indices4Temp && indices5 == indices5Temp && indices6 == indices6Temp && indices7 == indices7Temp && indices8 == indices8Temp))
-       fprintf("Bing");
+   if(~(indices1 == indices1Temp))
        if(frameCount < 0)
            frameCount = frameCount + 1;
            indices1Temp = indices1;
        else
            temp1 = typecast(indices1, 'uint8'); %[4,3,2,1]
-           fprintf("Float 1: %d %d %d %d\n", temp1);
            for i = 1:4
                if(temp1(i) ~= 0)
                    indices(1,HRVcount) = uint16(temp1(i)) + uint16(frameCount*256);
@@ -347,7 +350,6 @@ end
            indices1Temp = indices1;
 
            temp2 = typecast(indices2, 'uint8'); %[4,3,2,1]
-           fprintf("Float 2: %d %d %d %d\n", temp2);
            for i = 1:4
                if(temp2(i) ~= 0)
                    indices(1,HRVcount) = uint16(temp2(i)) + uint16(frameCount*256);
@@ -358,7 +360,6 @@ end
            end
 
            temp3 = typecast(indices3, 'uint8'); %[4,3,2,1]
-           fprintf("Float 3: %d %d %d %d\n", temp3);
            for i = 1:4
                if(temp3(i) ~= 0)
                    indices(1,HRVcount) = uint16(temp3(i)) + uint16(frameCount*256);
@@ -369,7 +370,6 @@ end
            end
 
            temp4 = typecast(indices4, 'uint8'); %[4,3,2,1]
-           fprintf("Float 4: %d %d %d %d\n", temp4);
            for i = 1:4
                if(temp4(i) ~= 0)
                    indices(1,HRVcount) = uint16(temp4(i)) + uint16(frameCount*256);
@@ -422,9 +422,6 @@ end
        end
    end
 
-
-   app.Count_GUI.Value = double(outGlobalCount);  
-
     %Plot range profile
     if (app.Plot_RangeProfile.Value)
      rangeProfile = single(typecast(uint8([rangeProfileTemp]),'uint16'));
@@ -433,8 +430,8 @@ end
      set(hLineRangeProfile,'XData',rangeAxis,'YData',abs(rp_cplx(1:numRangeBinProcessed)));
      [val ind]=max(abs(rp_cplx(1:numRangeBinProcessed)));
      rangeBinValue = val; 
-    end           
-        
+    end
+
    %Check if plots are enabled on the GUI
    if(app.Plots_Enable.Value)
        
@@ -476,12 +473,9 @@ if (mod(cnt,valuesUpdateCount)==0)    % Displays after every valuesUpdateCount
     end
     
     app.Temp1Display.Value = double(breathRateEstPeak);%;
-    app.Temp2Display.Value = double(heartRateEstPeak);%
+    app.Temp2Display.Value = double(heartRateEstPeak);
     app.Temp1Display_2.Value = double(breathRateEstFFT);
-    app.Temp2Display_2.Value = double(heartRateEstFFT);%
-    app.CMBreathEditField.Value = double(outBreathNew_CM);
-    app.CMHeartEditField.Value  = double(outHeartNew_CM);    
-    app.MaxRangeIndex.Value = double(rangeBinPhase);
+    app.Temp2Display_2.Value = double(heartRateEstFFT);
     app.MotionFlagEditField.Value = double(motionFlag);
     
     if (motionFlag ==1)
@@ -609,6 +603,9 @@ if(~RESET_KEY_PRESSED)
     end
 end
 % -------------------------------
+
+stop(Timer);
+delete(Timer);
 
 %close and delete handles before exiting
 fclose(sphandle); %close com port
