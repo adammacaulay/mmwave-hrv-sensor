@@ -232,6 +232,10 @@ indices1Temp = single(0);
 HRVcount = 1;
 frameCount = -2;
 countdownClock = tic;
+ 
+Timer = timer('ExecutionMode', 'fixedRate'); % Create the timer object
+Timer.TimerFcn = @app.TimerRefresh; % Tell the timer to run TimerRefresh every second.
+start(app.Timer);
 while (~PAUSED_KEY_PRESSED && toc(countdownClock)< 300)
     if ~isempty(bytevec)
         startFramecou = framecou;
@@ -269,6 +273,7 @@ while (~PAUSED_KEY_PRESSED && toc(countdownClock)< 300)
         
 
 if(app.REFRESH_PRESSED)
+stop(Timer);
 framecountDummy = 0;
 outBreathPlot = nan(1,PLOT_DISPLAY_LENGTH);outBreathPlot(1) = 0;
 outHeartPlot  = nan(1,PLOT_DISPLAY_LENGTH);outHeartPlot(1) = 0;
@@ -572,7 +577,8 @@ end
         tIdleStart = tic;
    end
 end
-
+stop(app.Timer);
+delete(app.Timer);
 % Calculate HRV data ------------
 indicesTemp = indices(1,:);
 indicesTemp = indicesTemp(1:find(indicesTemp,1,'last'));
