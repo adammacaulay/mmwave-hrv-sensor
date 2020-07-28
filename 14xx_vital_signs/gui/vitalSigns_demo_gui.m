@@ -235,7 +235,7 @@ countdownClock = tic;
  
 Timer = timer('ExecutionMode', 'fixedRate'); % Create the timer object
 Timer.TimerFcn = @app.TimerRefresh; % Tell the timer to run TimerRefresh every second.
-start(app.Timer);
+start(Timer);
 while (~PAUSED_KEY_PRESSED && toc(countdownClock)< 300)
     if ~isempty(bytevec)
         startFramecou = framecou;
@@ -577,8 +577,8 @@ end
         tIdleStart = tic;
    end
 end
-stop(app.Timer);
-delete(app.Timer);
+stop(Timer);
+delete(Timer);
 % Calculate HRV data ------------
 indicesTemp = indices(1,:);
 indicesTemp = indicesTemp(1:find(indicesTemp,1,'last'));
