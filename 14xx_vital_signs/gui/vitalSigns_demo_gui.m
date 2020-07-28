@@ -303,7 +303,7 @@ end
    
    if (app.SaveData.Value)
     fwrite(fid_write_bin, bytevec_data,'uint8');      
-   end         
+   end
         
    framecountDummy = framecountDummy +1;
    cnt = mod(framecountDummy, PLOT_DISPLAY_LENGTH)+1;        
