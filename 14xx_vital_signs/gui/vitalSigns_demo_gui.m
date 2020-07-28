@@ -268,17 +268,19 @@ while (~RESET_KEY_PRESSED && toc(countdownClock)< 300)
         
 
 if(app.REFRESH_PRESSED)
-stop(Timer);
-framecountDummy = 0;
-outBreathPlot = nan(1,PLOT_DISPLAY_LENGTH);outBreathPlot(1) = 0;
-outHeartPlot  = nan(1,PLOT_DISPLAY_LENGTH);outHeartPlot(1) = 0;
-outPhasePlot  = nan(1,PLOT_DISPLAY_LENGTH);outPhasePlot(1) = 0;
-   ss = sprintf('guiMonitor %f %f %d %d \n',0,0,app.FFT_SPECTRAL_EST_ENABLE,1);
-   fprintf(spCliHandle, ss);
-   pause(.2);
-outSumEnergyBreathWfm_thresh = app.ThresholdBreathing.Value;   % Threshold on the Breathing Waveform 
-thresh_HeartCM = app.ThresholdHeart.Value;
-app.REFRESH_PRESSED = 0;   
+    framecountDummy = 0;
+    outBreathPlot = nan(1,PLOT_DISPLAY_LENGTH);outBreathPlot(1) = 0;
+    outHeartPlot  = nan(1,PLOT_DISPLAY_LENGTH);outHeartPlot(1) = 0;
+    outPhasePlot  = nan(1,PLOT_DISPLAY_LENGTH);outPhasePlot(1) = 0;
+    ss = sprintf('guiMonitor %f %f %d %d \n',0,0,app.FFT_SPECTRAL_EST_ENABLE,1);
+    fprintf(spCliHandle, ss);
+    pause(.2);
+    outSumEnergyBreathWfm_thresh = app.ThresholdBreathing.Value;   % Threshold on the Breathing Waveform
+    % reset HRV vals
+    app.SDNN_val.Value = 0;
+    app.RMSSD_val.Value = 0;
+    app.HTI_val.Value = 0;
+    app.REFRESH_PRESSED = 0;   
 end
 
 if (app.CLI_SEND_FLAG)        
