@@ -190,8 +190,8 @@ fid_write_bin = fopen(strcat(file_name, '.bin'),'wb');  % By Default open the fi
 outBreathPlot = nan(1,PLOT_DISPLAY_LENGTH);outBreathPlot(1) = 0;
 outHeartPlot  = nan(1,PLOT_DISPLAY_LENGTH);outHeartPlot(1) = 0;
 outPhasePlot  = nan(1,PLOT_DISPLAY_LENGTH);outPhasePlot(1) = 0;
-PAUSED_KEY_PRESSED = 0;
 EXIT_KEY_PRESSED = 0;
+RESET_KEY_PRESSED = 0;
 
 outSumEnergyBreathWfm_thresh = 3;    % Threshold on the Breathing Waveform 
 outSumEnergyHeartWfm_thresh =  0.05; % Threshold on the HeartRate Waveform 
@@ -232,19 +232,15 @@ indices1Temp = single(0);
 HRVcount = 1;
 frameCount = -2;
 countdownClock = tic;
-while (~PAUSED_KEY_PRESSED && toc(countdownClock)< 300)
+while (~RESET_KEY_PRESSED && toc(countdownClock)< 300)
     if ~isempty(bytevec)
         startFramecou = framecou;
         
-    if(app.PAUSED_PRESSED)
-        PAUSED_KEY_PRESSED = 1;
-    end
-
     if(app.EXIT_PRESSED)
-        EXIT_KEY_PRESSED = 1;
+        RESET_KEY_PRESSED = 1;
     end
 
-    if(EXIT_KEY_PRESSED)
+    if(RESET_KEY_PRESSED)
        app.EXIT_PRESSED = 0;
        ss = sprintf('sensorStop \n');
        fprintf(spCliHandle, ss);
@@ -584,21 +580,34 @@ end
    end
 end
 
-% Calculate HRV data ------------
-indicesTemp = indices(1,:);
-indicesTemp = indicesTemp(1:find(indicesTemp,1,'last'));
-NN = zeros(1,length(indicesTemp)-1);
-for i = 1:length(NN)
-    NN(i) = indicesTemp(i+1) - indicesTemp(i);
-end
-invalidEntries = NN < 11 | NN > 24;
-NN(invalidEntries) = [];
-NN = NN * 50; % convert number of samples to ms
+if(~RESET_KEY_PRESSED)
+    % Calculate HRV data ------------
+    indicesTemp = indices(1,:);
+    indicesTemp = indicesTemp(1:find(indicesTemp,1,'last'));
+    NN = zeros(1,length(indicesTemp)-1);
+    for i = 1:length(NN)
+        NN(i) = indicesTemp(i+1) - indicesTemp(i);
+    end
+    invalidEntries = NN < 11 | NN > 24;
+    NN(invalidEntries) = [];
+    NN = NN * 50; % convert number of samples to ms
 
-[SDNN, RMSSD, HTI] = HRV(NN);
-app.SDNN_val.value = SDNN;
-app.RMSSD_val.value = RMSSD;
-app.HTI_val.value = HTI;
+    [SDNN, RMSSD, HTI] = HRV(NN);
+    app.SDNN_val.Value = SDNN;
+    app.RMSSD_val.Value = RMSSD;
+    app.HTI_val.Value = HTI;
+
+    % stop sensor
+    ss = sprintf('sensorStop \n');
+    fprintf(spCliHandle, ss);
+
+    while(~EXIT_KEY_PRESSED)
+        if(app.EXIT_PRESSED)
+             EXIT_KEY_PRESSED = 1;
+             app.EXIT_PRESSED = 0;
+	end
+    end
+end
 % -------------------------------
 
 %close and delete handles before exiting
