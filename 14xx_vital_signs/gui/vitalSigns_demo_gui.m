@@ -452,12 +452,13 @@ end
     
      
     % Heart Rate Display Decision
-    diffEst_heartRate = abs(heartRateEstFFT - heartRateEstPeak);    
-    if (diffEst_heartRate < thresh_diffEst)
-    heartRateEstDisplay = heartRateEstFFT; 
-    else
-    heartRateEstDisplay = heartRateEstPeak;
-    end
+%    diffEst_heartRate = abs(heartRateEstFFT - heartRateEstPeak);
+%     if (diffEst_heartRate < thresh_diffEst)
+%     heartRateEstDisplay = heartRateEstFFT;
+%     else
+%     heartRateEstDisplay = heartRateEstPeak;
+%     end
+    heartRateEstDisplay = mean([heartRateEstFFT, heartRateEstPeak]);
 
 heartRateEstDisplay_CircBuffer = circshift(heartRateEstDisplay_CircBuffer, [0 -1]);
 heartRateEstDisplay_CircBuffer(LENGTH_BUFFER) = heartRateEstDisplay;
@@ -582,7 +583,7 @@ if(~RESET_KEY_PRESSED)
     for i = 1:length(NN)
         NN(i) = indicesTemp(i+1) - indicesTemp(i);
     end
-    invalidEntries = NN < 11 | NN > 24;
+    invalidEntries = NN < 12 | NN > 23;
     NN(invalidEntries) = [];
     NN = NN * 50; % convert number of samples to ms
 
