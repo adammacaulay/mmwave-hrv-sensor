@@ -5,4 +5,4 @@ Capstone project to measure Heart Rate Variability using mmWave radar.
 
 A video presentation of the topic can be found here:
 
-[![Watch the video](https://img.youtube.com/vi/qHNLQrUQSfQ/maxresdefault.jpg)](https://youtu.be/qHNLQrUQSfQ)
+[![Watch the video](https://img.youtube.com/vi/qHNLQrUQSfQ/maxresdefault.jpg)](https://youtu.be/qHNLQrUQSfQ "Video Presentation - YouTube")
